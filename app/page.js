@@ -209,21 +209,26 @@ function NewEntryScreen({ cat, onCancel, onSave }) {
   const fileInput = useRef(null);
 
   async function pickPhotos(event) {
-    const files = Array.from(event.target.files || []);
+    const input = event.target;
+    const files = Array.from(input.files || []);
+
+    // 入力のリセットは await より前に、同期的に行う。
+    // iPad Safari は value が残っている間、次の選択で change を発火しないため、
+    // 縮小の完了を待ってからリセットすると2枚目以降を追加できなくなる。
+    input.value = '';
     if (files.length === 0) return;
 
-    const room = MAX_PHOTOS - photos.length;
+    const room = Math.max(0, MAX_PHOTOS - photos.length);
     setMessage(files.length > room ? `写真は${MAX_PHOTOS}枚までです。` : '');
 
     try {
       const added = await Promise.all(files.slice(0, room).map((file) => shrinkImage(file)));
-      setPhotos([...photos, ...added]);
+      // 縮小を待つ間に別の写真が追加されている場合があるので、
+      // 閉じ込めた photos ではなく最新の state に足す。
+      setPhotos((current) => [...current, ...added].slice(0, MAX_PHOTOS));
     } catch {
       setMessage('写真を読み込めませんでした。別の写真をお試しください。');
     }
-
-    // 同じ写真をもう一度選べるように入力をリセットする。
-    event.target.value = '';
   }
 
   function save() {
@@ -271,7 +276,7 @@ function NewEntryScreen({ cat, onCancel, onSave }) {
                 <button
                   type="button"
                   aria-label="この写真を削除"
-                  onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
+                  onClick={() => setPhotos((current) => current.filter((_, i) => i !== index))}
                 >
                   ×
                 </button>

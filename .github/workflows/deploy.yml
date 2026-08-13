@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      # ビルドに devDependencies は不要。テスト用の playwright が
+      # ブラウザをダウンロードしないよう本番依存だけを入れる。
+      - run: npm ci --omit=dev
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
