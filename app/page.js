@@ -11,6 +11,15 @@ import {
 } from '../lib/storage';
 
 const MAX_PHOTOS = 5;
+const DUPLICATE_MESSAGE = 'この日付にはすでに記録があります。';
+
+// 1匹の猫につき1日1件。同じ猫・同じ日付の記録を探す。
+// exceptId を渡すと、その記録自身は当たらない（日付を変えずに編集した場合）。
+function findEntryOfDay(entries, catId, date, exceptId) {
+  return entries.find(
+    (entry) => entry.catId === catId && entry.date === date && entry.id !== exceptId,
+  );
+}
 
 // 画面は3つだけ。ルーティングは使わず、状態で切り替える。
 export default function App() {
@@ -46,7 +55,16 @@ export default function App() {
         cat={currentCat}
         entries={data.entries.filter((entry) => entry.catId === currentCat.id)}
         onBack={() => setView('home')}
-        onNew={() => setView('new')}
+        onNew={() => {
+          // その日の記録がもうあるなら、新しく作らずにそれを編集する。
+          const today = findEntryOfDay(data.entries, currentCat.id, todayString());
+          if (today) {
+            setEditingEntryId(today.id);
+            setView('edit');
+            return;
+          }
+          setView('new');
+        }}
         onEdit={(entryId) => {
           setEditingEntryId(entryId);
           setView('edit');
@@ -61,6 +79,9 @@ export default function App() {
         cat={currentCat}
         onCancel={() => setView('cat')}
         onSave={(entry) => {
+          // 日付を変えて保存された場合も、その日の記録が二重にならないようにする。
+          if (findEntryOfDay(data.entries, currentCat.id, entry.date)) return DUPLICATE_MESSAGE;
+
           const saved = update({ ...data, entries: [entry, ...data.entries] });
           if (!saved) return false;
           setView('cat');
@@ -79,6 +100,11 @@ export default function App() {
         entry={editingEntry}
         onCancel={() => setView('cat')}
         onSave={(next) => {
+          // 移動先の日付にすでに記録がある場合は、統合せず保存を中止する。
+          if (findEntryOfDay(data.entries, currentCat.id, next.date, next.id)) {
+            return DUPLICATE_MESSAGE;
+          }
+
           const saved = update({
             ...data,
             entries: data.entries.map((entry) => (entry.id === next.id ? next : entry)),
@@ -280,7 +306,8 @@ function EntryScreen({ cat, entry, onCancel, onSave, onDelete }) {
 
   function save() {
     // 編集時は既存の entry の形をそのまま保ち、id と catId を引き継ぐ。
-    const ok = onSave({
+    // 保存できた場合は true、できなかった場合は理由の文言か false が返る。
+    const result = onSave({
       ...(entry || {}),
       id: entry ? entry.id : `entry-${Date.now()}`,
       catId: cat.id,
@@ -289,9 +316,13 @@ function EntryScreen({ cat, entry, onCancel, onSave, onDelete }) {
       text: text.trim(),
     });
 
-    if (!ok) {
-      setMessage('保存できませんでした。写真の枚数を減らすか、古い記録を整理してください。');
-    }
+    if (result === true) return;
+
+    setMessage(
+      typeof result === 'string'
+        ? result
+        : '保存できませんでした。写真の枚数を減らすか、古い記録を整理してください。',
+    );
   }
 
   const canSave = photos.length > 0 || text.trim().length > 0;

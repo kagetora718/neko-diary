@@ -131,8 +131,8 @@ export async function reset(page, base) {
   await page.reload({ waitUntil: 'domcontentloaded' });
 }
 
-export async function openCat(page) {
-  await page.getByRole('button', { name: /ラヴィ/ }).click();
+export async function openCat(page, name = /ラヴィ/) {
+  await page.getByRole('button', { name }).click();
 }
 
 export async function openNewEntry(page, base) {
