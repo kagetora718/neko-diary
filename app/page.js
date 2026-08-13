@@ -18,6 +18,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [view, setView] = useState('home');
   const [currentCatId, setCurrentCatId] = useState(null);
+  const [editingEntryId, setEditingEntryId] = useState(null);
 
   // localStorage はブラウザにしかないので、表示後に読み込む。
   useEffect(() => {
@@ -46,13 +47,17 @@ export default function App() {
         entries={data.entries.filter((entry) => entry.catId === currentCat.id)}
         onBack={() => setView('home')}
         onNew={() => setView('new')}
+        onEdit={(entryId) => {
+          setEditingEntryId(entryId);
+          setView('edit');
+        }}
       />
     );
   }
 
   if (view === 'new' && currentCat) {
     return (
-      <NewEntryScreen
+      <EntryScreen
         cat={currentCat}
         onCancel={() => setView('cat')}
         onSave={(entry) => {
@@ -60,6 +65,35 @@ export default function App() {
           if (!saved) return false;
           setView('cat');
           return true;
+        }}
+      />
+    );
+  }
+
+  const editingEntry = data.entries.find((entry) => entry.id === editingEntryId);
+
+  if (view === 'edit' && currentCat && editingEntry) {
+    return (
+      <EntryScreen
+        cat={currentCat}
+        entry={editingEntry}
+        onCancel={() => setView('cat')}
+        onSave={(next) => {
+          const saved = update({
+            ...data,
+            entries: data.entries.map((entry) => (entry.id === next.id ? next : entry)),
+          });
+          if (!saved) return false;
+          setView('cat');
+          return true;
+        }}
+        onDelete={() => {
+          update({
+            ...data,
+            entries: data.entries.filter((entry) => entry.id !== editingEntry.id),
+          });
+          setEditingEntryId(null);
+          setView('cat');
         }}
       />
     );
@@ -73,6 +107,11 @@ export default function App() {
       onAddCat={(name) => update({ ...data, cats: [...data.cats, newCat(name)] })}
     />
   );
+}
+
+// 保存済みデータに photos がない場合でも表示できるようにする（移行処理は行わない）。
+function entryPhotos(entry) {
+  return Array.isArray(entry.photos) ? entry.photos : [];
 }
 
 function newCat(name) {
@@ -152,7 +191,7 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
 
 /* ---------- 画面2：猫ごとの日記一覧 ---------- */
 
-function CatScreen({ cat, entries, onBack, onNew }) {
+function CatScreen({ cat, entries, onBack, onNew, onEdit }) {
   return (
     <main className="screen">
       <button className="back" onClick={onBack}>
@@ -181,11 +220,16 @@ function CatScreen({ cat, entries, onBack, onNew }) {
       ) : (
         entries.map((entry) => (
           <article key={entry.id} className="entry">
-            <p className="entry-date">{formatDate(entry.date)}</p>
+            <div className="entry-head">
+              <p className="entry-date">{formatDate(entry.date)}</p>
+              <button type="button" className="entry-edit" onClick={() => onEdit(entry.id)}>
+                編集
+              </button>
+            </div>
 
-            {entry.photos.length > 0 && (
-              <div className={`entry-photos ${entry.photos.length === 1 ? 'single' : ''}`}>
-                {entry.photos.map((photo, index) => (
+            {entryPhotos(entry).length > 0 && (
+              <div className={`entry-photos ${entryPhotos(entry).length === 1 ? 'single' : ''}`}>
+                {entryPhotos(entry).map((photo, index) => (
                   <img key={index} src={photo} alt="" />
                 ))}
               </div>
@@ -201,11 +245,14 @@ function CatScreen({ cat, entries, onBack, onNew }) {
 
 /* ---------- 画面3：新規記録 ---------- */
 
-function NewEntryScreen({ cat, onCancel, onSave }) {
-  const [date, setDate] = useState(todayString());
-  const [photos, setPhotos] = useState([]);
-  const [text, setText] = useState('');
+// 新規作成と編集で同じ画面を使う。entry があれば編集。
+function EntryScreen({ cat, entry, onCancel, onSave, onDelete }) {
+  const editing = Boolean(entry);
+  const [date, setDate] = useState(entry ? entry.date : todayString());
+  const [photos, setPhotos] = useState(entry ? entryPhotos(entry) : []);
+  const [text, setText] = useState(entry ? entry.text || '' : '');
   const [message, setMessage] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const fileInput = useRef(null);
 
   async function pickPhotos(event) {
@@ -232,8 +279,10 @@ function NewEntryScreen({ cat, onCancel, onSave }) {
   }
 
   function save() {
+    // 編集時は既存の entry の形をそのまま保ち、id と catId を引き継ぐ。
     const ok = onSave({
-      id: `entry-${Date.now()}`,
+      ...(entry || {}),
+      id: entry ? entry.id : `entry-${Date.now()}`,
       catId: cat.id,
       date,
       photos,
@@ -253,7 +302,7 @@ function NewEntryScreen({ cat, onCancel, onSave }) {
         ← {cat.name}の日記
       </button>
 
-      <h1 className="title">今日の思い出</h1>
+      <h1 className="title">{editing ? '記録を編集' : '今日の思い出'}</h1>
 
       <div className="field">
         <div className="field-label">日付</div>
@@ -266,7 +315,7 @@ function NewEntryScreen({ cat, onCancel, onSave }) {
       </div>
 
       <div className="field">
-        <div className="field-label">写真（最大{MAX_PHOTOS}枚）</div>
+        <div className="field-label">写真（1枚ずつ追加・最大{MAX_PHOTOS}枚）</div>
 
         {photos.length > 0 && (
           <div className="preview-grid">
@@ -301,6 +350,7 @@ function NewEntryScreen({ cat, onCancel, onSave }) {
         >
           写真を追加
         </button>
+        <p className="hint">写真は1枚ずつ追加できます（{photos.length}/{MAX_PHOTOS}枚）。</p>
       </div>
 
       <div className="field">
@@ -321,6 +371,27 @@ function NewEntryScreen({ cat, onCancel, onSave }) {
           保存する
         </button>
       </div>
+
+      {editing &&
+        (confirmingDelete ? (
+          <div className="confirm">
+            <p className="confirm-text">この記録を削除しますか？</p>
+            <div className="stack">
+              <button type="button" className="btn btn-danger" onClick={onDelete}>
+                削除する
+              </button>
+              <button type="button" className="back" onClick={() => setConfirmingDelete(false)}>
+                キャンセル
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="stack">
+            <button type="button" className="delete-link" onClick={() => setConfirmingDelete(true)}>
+              この記録を削除
+            </button>
+          </div>
+        ))}
     </main>
   );
 }

@@ -108,10 +108,28 @@ body {
   margin-bottom: 16px;
 }
 
-.entry-date {
+.entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 12px 16px 0;
+}
+
+.entry-date {
   font-size: 13px;
   color: var(--muted);
+}
+
+/* 日記カードの「編集」は控えめに置く */
+.entry-edit {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 2px 4px;
+  cursor: pointer;
 }
 
 /* 写真が主役になるよう、大きく並べる */
@@ -180,6 +198,35 @@ body {
   background: var(--card);
   border: 1px dashed var(--line);
   color: var(--muted);
+}
+
+.btn-danger {
+  background: #c9576f;
+  color: #fff;
+}
+
+/* --- 記録の削除 --- */
+.delete-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-family: inherit;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.confirm {
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--card);
+}
+
+.confirm-text {
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .back {
