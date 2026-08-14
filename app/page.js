@@ -14,6 +14,7 @@ const MAX_PHOTOS = 5;
 // 代表写真はカード表示なので、日記の写真より小さくてよい。
 const CAT_PHOTO_SIZE = 400;
 const DUPLICATE_MESSAGE = 'この日付にはすでに記録があります。';
+const SAVE_PHOTO_MESSAGE = '写真を保存できませんでした。別の写真をお試しください。';
 
 // 1匹の猫につき1日1件。同じ猫・同じ日付の記録を探す。
 // exceptId を渡すと、その記録自身は当たらない（日付を変えずに編集した場合）。
@@ -37,9 +38,12 @@ export default function App() {
     setReady(true);
   }, []);
 
+  // localStorage に保存できたときだけ画面の状態を進める。
+  // 保存できていないのに見た目だけ変わると、次に開いたときに元へ戻ってしまう。
   function update(next) {
+    if (!saveData(next)) return false;
     setData(next);
-    return saveData(next);
+    return true;
   }
 
   function openCat(catId) {
@@ -199,7 +203,12 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    onAddCat(trimmed, photo);
+    // 保存できなかったときは追加できたことにしない。
+    if (!onAddCat(trimmed, photo)) {
+      setMessage(SAVE_PHOTO_MESSAGE);
+      return;
+    }
+
     setName('');
     setPhoto(null);
     setMessage('');
@@ -301,7 +310,11 @@ function CatScreen({ cat, entries, onBack, onNew, onEdit, onChangePhoto }) {
           <SinglePhotoPicker
             label="写真を選ぶ"
             onPick={(photo) => {
-              onChangePhoto(photo);
+              // 保存できなかったときは成功扱いにしない。
+              if (!onChangePhoto(photo)) {
+                setMessage(SAVE_PHOTO_MESSAGE);
+                return;
+              }
               setChangingPhoto(false);
               setMessage('');
             }}

@@ -45,6 +45,19 @@ async function cardPhoto(name) {
   }, name);
 }
 
+// 以後の localStorage への保存だけ失敗させる（容量超過の再現）。
+// 読み込みが終わったあとに呼ぶこと。
+const failSaves = () =>
+  page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'neko-diary-v1') {
+        throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' });
+      }
+      return original.call(this, key, value);
+    };
+  });
+
 const storedCats = () =>
   page.evaluate(() => JSON.parse(window.localStorage.getItem('neko-diary-v1') || '{}').cats || []);
 
@@ -145,7 +158,75 @@ describe('猫の代表写真', () => {
     assert.equal(await page.locator('.cat-card').count(), 1);
   });
 
-  it('8. 一連の操作でJavaScriptエラーが発生しない', () => {
+  it('8. 保存できないときは代表写真の変更を成功扱いにしない', async () => {
+    await reset(page, app.base);
+    await page.waitForSelector('.cat-card');
+    await failSaves();
+
+    await openCat(page);
+    const before = await page.locator('.cat-header img').getAttribute('src');
+    await page.getByRole('button', { name: '写真を変更' }).click();
+    await choosePhoto(0);
+
+    // 見た目だけ変わって保存されていない、という状態にしない
+    assert.equal(
+      await page.locator('.cat-header img').getAttribute('src'),
+      before,
+      '保存できていないのにヘッダーが変わっている',
+    );
+    assert.equal(
+      await page.locator('.notice').innerText(),
+      '写真を保存できませんでした。別の写真をお試しください。',
+    );
+    assert.equal(await page.locator('input[type=file]').count(), 1, '成功したかのように閉じている');
+
+    // ホームへ戻ってもカードは元のまま
+    await page.getByRole('button', { name: '← ホーム' }).click();
+    assert.equal(await cardPhoto('ラヴィ'), before);
+  });
+
+  it('9. 保存できなかったとき、保存済みのデータを壊さない', async () => {
+    await reset(page, app.base);
+    await page.waitForSelector('.cat-card');
+
+    // まず一度成功させて、保存済みデータがある状態にする
+    await openCat(page);
+    await page.getByRole('button', { name: '写真を変更' }).click();
+    await choosePhoto(0);
+    const before = await page.evaluate(() => window.localStorage.getItem('neko-diary-v1'));
+    assert.ok(before, '前提となる保存ができていない');
+
+    // ここから保存が失敗するようにして、別の写真を選ぶ
+    await failSaves();
+    await page.getByRole('button', { name: '写真を変更' }).click();
+    await choosePhoto(1);
+
+    assert.equal(
+      await page.evaluate(() => window.localStorage.getItem('neko-diary-v1')),
+      before,
+      '保存に失敗したのに保存内容が変わっている',
+    );
+  });
+
+  it('10. 保存できないときは新しい猫を追加したことにしない', async () => {
+    await reset(page, app.base);
+    await page.waitForSelector('.cat-card');
+    const count = await page.locator('.cat-card').count();
+    await failSaves();
+
+    await page.getByRole('button', { name: '＋ 猫を追加' }).click();
+    await page.locator('.input').fill('そら');
+    await choosePhoto(0);
+    await page.getByRole('button', { name: '追加する' }).click();
+
+    assert.equal(await page.locator('.cat-card').count(), count, '保存できていないのに増えている');
+    assert.equal(
+      await page.locator('.notice').innerText(),
+      '写真を保存できませんでした。別の写真をお試しください。',
+    );
+  });
+
+  it('11. 一連の操作でJavaScriptエラーが発生しない', () => {
     assert.deepEqual(app.jsErrors, []);
   });
 });
