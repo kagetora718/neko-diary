@@ -11,6 +11,8 @@ import {
 } from '../lib/storage';
 
 const MAX_PHOTOS = 5;
+// 代表写真はカード表示なので、日記の写真より小さくてよい。
+const CAT_PHOTO_SIZE = 400;
 const DUPLICATE_MESSAGE = 'この日付にはすでに記録があります。';
 
 // 1匹の猫につき1日1件。同じ猫・同じ日付の記録を探す。
@@ -69,6 +71,12 @@ export default function App() {
           setEditingEntryId(entryId);
           setView('edit');
         }}
+        onChangePhoto={(photo) =>
+          update({
+            ...data,
+            cats: data.cats.map((cat) => (cat.id === currentCat.id ? { ...cat, photo } : cat)),
+          })
+        }
       />
     );
   }
@@ -130,7 +138,7 @@ export default function App() {
       cats={data.cats}
       entries={data.entries}
       onSelect={openCat}
-      onAddCat={(name) => update({ ...data, cats: [...data.cats, newCat(name)] })}
+      onAddCat={(name, photo) => update({ ...data, cats: [...data.cats, newCat(name, photo)] })}
     />
   );
 }
@@ -140,12 +148,42 @@ function entryPhotos(entry) {
   return Array.isArray(entry.photos) ? entry.photos : [];
 }
 
-function newCat(name) {
+function newCat(name, photo) {
   return {
     id: `cat-${Date.now()}`,
     name,
-    photo: placeholderPhoto('#f3ebe3'),
+    // 写真を選ばなかった場合は今までどおりプレースホルダーを使う。
+    photo: photo || placeholderPhoto('#f3ebe3'),
   };
+}
+
+/* ---------- 写真を1枚だけ選ぶ（猫の代表写真用） ---------- */
+
+// 日記の写真追加と同じ作法。value は await より前に同期的に空にする。
+function SinglePhotoPicker({ label, onPick, onError }) {
+  const fileInput = useRef(null);
+
+  async function pick(event) {
+    const input = event.target;
+    const [file] = Array.from(input.files || []);
+    input.value = '';
+    if (!file) return;
+
+    try {
+      onPick(await shrinkImage(file, CAT_PHOTO_SIZE));
+    } catch {
+      onError();
+    }
+  }
+
+  return (
+    <>
+      <input ref={fileInput} type="file" accept="image/*" onChange={pick} hidden />
+      <button type="button" className="btn btn-soft" onClick={() => fileInput.current.click()}>
+        {label}
+      </button>
+    </>
+  );
 }
 
 /* ---------- 画面1：ホーム ---------- */
@@ -153,14 +191,18 @@ function newCat(name) {
 function HomeScreen({ cats, entries, onSelect, onAddCat }) {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
+  const [photo, setPhoto] = useState(null);
+  const [message, setMessage] = useState('');
 
   function submit(event) {
     event.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    onAddCat(trimmed);
+    onAddCat(trimmed, photo);
     setName('');
+    setPhoto(null);
+    setMessage('');
     setAdding(false);
   }
 
@@ -196,7 +238,21 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
               placeholder="猫の名前"
               autoFocus
             />
+
             <div className="stack">
+              {photo && (
+                <div className="cat-photo-preview">
+                  <img src={photo} alt="" />
+                </div>
+              )}
+              <SinglePhotoPicker
+                label={photo ? '写真を選び直す' : '写真を選ぶ（あとからでも可）'}
+                onPick={(next) => {
+                  setPhoto(next);
+                  setMessage('');
+                }}
+                onError={() => setMessage('写真を読み込めませんでした。別の写真をお試しください。')}
+              />
               <button type="submit" className="btn btn-primary" disabled={!name.trim()}>
                 追加する
               </button>
@@ -204,6 +260,8 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
                 キャンセル
               </button>
             </div>
+
+            {message && <p className="notice">{message}</p>}
           </form>
         ) : (
           <button className="btn btn-outline" onClick={() => setAdding(true)}>
@@ -217,7 +275,11 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
 
 /* ---------- 画面2：猫ごとの日記一覧 ---------- */
 
-function CatScreen({ cat, entries, onBack, onNew, onEdit }) {
+function CatScreen({ cat, entries, onBack, onNew, onEdit, onChangePhoto }) {
+  const [tab, setTab] = useState('list');
+  const [changingPhoto, setChangingPhoto] = useState(false);
+  const [message, setMessage] = useState('');
+
   return (
     <main className="screen">
       <button className="back" onClick={onBack}>
@@ -226,8 +288,32 @@ function CatScreen({ cat, entries, onBack, onNew, onEdit }) {
 
       <div className="cat-header">
         <img src={cat.photo} alt={cat.name} />
-        <h1 className="title">{cat.name}</h1>
+        <div>
+          <h1 className="title">{cat.name}</h1>
+          <button type="button" className="cat-photo-edit" onClick={() => setChangingPhoto(true)}>
+            写真を変更
+          </button>
+        </div>
       </div>
+
+      {changingPhoto && (
+        <div className="stack">
+          <SinglePhotoPicker
+            label="写真を選ぶ"
+            onPick={(photo) => {
+              onChangePhoto(photo);
+              setChangingPhoto(false);
+              setMessage('');
+            }}
+            onError={() => setMessage('写真を読み込めませんでした。別の写真をお試しください。')}
+          />
+          <button type="button" className="back" onClick={() => setChangingPhoto(false)}>
+            キャンセル
+          </button>
+        </div>
+      )}
+
+      {message && <p className="notice">{message}</p>}
 
       <div className="stack">
         <button className="btn btn-primary" onClick={onNew}>
@@ -235,6 +321,35 @@ function CatScreen({ cat, entries, onBack, onNew, onEdit }) {
         </button>
       </div>
 
+      <div className="tabs">
+        <button
+          type="button"
+          className={tab === 'list' ? 'tab is-on' : 'tab'}
+          onClick={() => setTab('list')}
+        >
+          一覧
+        </button>
+        <button
+          type="button"
+          className={tab === 'calendar' ? 'tab is-on' : 'tab'}
+          onClick={() => setTab('calendar')}
+        >
+          カレンダー
+        </button>
+      </div>
+
+      {tab === 'calendar' ? (
+        <MonthCalendar entries={entries} onOpen={onEdit} />
+      ) : (
+        <ListView entries={entries} onEdit={onEdit} />
+      )}
+    </main>
+  );
+}
+
+function ListView({ entries, onEdit }) {
+  return (
+    <>
       <p className="section-label">これまでの記録</p>
 
       {entries.length === 0 ? (
@@ -265,7 +380,101 @@ function CatScreen({ cat, entries, onBack, onNew, onEdit }) {
           </article>
         ))
       )}
-    </main>
+    </>
+  );
+}
+
+/* ---------- 月間カレンダー ---------- */
+
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+// 'YYYY-MM-DD'。todayString() と同じ形にそろえる。
+function dateString(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+// 月のマス目を作る。頭の空白は月初の曜日ぶん。
+function monthCells(year, month) {
+  const blanks = new Date(year, month, 1).getDay();
+  const days = new Date(year, month + 1, 0).getDate();
+
+  return [
+    ...Array.from({ length: blanks }, () => null),
+    ...Array.from({ length: days }, (_, i) => i + 1),
+  ];
+}
+
+// カレンダー用のデータは持たず、そのつど entries から引く。
+function MonthCalendar({ entries, onOpen }) {
+  const [shown, setShown] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  });
+
+  function move(step) {
+    setShown((current) => {
+      const next = new Date(current.year, current.month + step, 1);
+      return { year: next.getFullYear(), month: next.getMonth() };
+    });
+  }
+
+  const byDate = new Map(entries.map((entry) => [entry.date, entry]));
+
+  return (
+    <div className="calendar">
+      <div className="calendar-head">
+        <button type="button" className="calendar-move" aria-label="前の月" onClick={() => move(-1)}>
+          ‹
+        </button>
+        <p className="calendar-title">
+          {shown.year}年{shown.month + 1}月
+        </p>
+        <button type="button" className="calendar-move" aria-label="次の月" onClick={() => move(1)}>
+          ›
+        </button>
+      </div>
+
+      <div className="calendar-grid">
+        {WEEKDAYS.map((label) => (
+          <div key={label} className="calendar-weekday">
+            {label}
+          </div>
+        ))}
+
+        {monthCells(shown.year, shown.month).map((day, index) => {
+          if (day === null) return <div key={`blank-${index}`} className="calendar-cell is-blank" />;
+
+          const entry = byDate.get(dateString(shown.year, shown.month, day));
+          const photo = entry ? entryPhotos(entry)[0] : null;
+
+          // 記録がない日は押せないままにする（その日の新規作成は行わない）。
+          if (!entry) {
+            return (
+              <div key={day} className="calendar-cell">
+                <span className="calendar-day">{day}</span>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={day}
+              type="button"
+              className="calendar-cell has-entry"
+              aria-label={`${shown.month + 1}月${day}日の記録`}
+              onClick={() => onOpen(entry.id)}
+            >
+              <span className="calendar-day">{day}</span>
+              {photo ? (
+                <img className="calendar-thumb" src={photo} alt="" />
+              ) : (
+                <span className="calendar-dot" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

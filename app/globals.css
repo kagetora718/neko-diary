@@ -97,6 +97,156 @@ body {
   height: 76px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cat-photo-edit {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.cat-photo-preview img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+/* --- 一覧 / カレンダーの切り替え --- */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 24px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 4px;
+}
+
+.tab {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  padding: 10px 4px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab.is-on {
+  background: var(--accent-soft);
+  color: #b8536e;
+  font-weight: 600;
+}
+
+/* --- 月間カレンダー --- */
+.calendar {
+  margin-top: 20px;
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.calendar-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.calendar-move {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 10px;
+  width: 40px;
+  height: 36px;
+  font-size: 18px;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* 7列。狭い画面でも横にはみ出さないよう minmax(0,1fr) にする */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  padding-bottom: 2px;
+}
+
+.calendar-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.calendar-cell.is-blank {
+  border-color: transparent;
+  background: none;
+}
+
+.calendar-cell.has-entry {
+  cursor: pointer;
+  border-color: var(--accent-soft);
+}
+
+.calendar-day {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  z-index: 1;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.calendar-cell.has-entry .calendar-day {
+  color: var(--text);
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9);
+}
+
+.calendar-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 写真のない記録は、控えめな点で「記録あり」と分かるようにする */
+.calendar-dot {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 /* --- 日記カード --- */
