@@ -237,6 +237,18 @@ body {
   display: block;
 }
 
+/* 大切な日の印。写真と日付を隠さないよう右上に小さく置く */
+.calendar-star {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  z-index: 1;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.95);
+}
+
 /* 写真のない記録は、控えめな点で「記録あり」と分かるようにする */
 .calendar-dot {
   position: absolute;
@@ -263,12 +275,35 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 12px 16px 0;
+  padding: 4px 16px 0;
+}
+
+.entry-head-left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .entry-date {
   font-size: 13px;
   color: var(--muted);
+}
+
+/* 大切な日の印。指で押せるよう44pxを確保する */
+.entry-star {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.entry-star.is-on {
+  color: var(--accent);
 }
 
 /* 日記カードの「編集」は控えめに置く */

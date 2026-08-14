@@ -75,6 +75,15 @@ export default function App() {
           setEditingEntryId(entryId);
           setView('edit');
         }}
+        onToggleImportant={(entryId) =>
+          update({
+            ...data,
+            entries: data.entries.map((entry) =>
+              // important がない既存データは false 扱いなので、押すと大切な日になる。
+              entry.id === entryId ? { ...entry, important: !entry.important } : entry,
+            ),
+          })
+        }
         onChangePhoto={(photo) =>
           update({
             ...data,
@@ -284,7 +293,7 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
 
 /* ---------- 画面2：猫ごとの日記一覧 ---------- */
 
-function CatScreen({ cat, entries, onBack, onNew, onEdit, onChangePhoto }) {
+function CatScreen({ cat, entries, onBack, onNew, onEdit, onToggleImportant, onChangePhoto }) {
   const [tab, setTab] = useState('list');
   const [changingPhoto, setChangingPhoto] = useState(false);
   const [message, setMessage] = useState('');
@@ -354,13 +363,13 @@ function CatScreen({ cat, entries, onBack, onNew, onEdit, onChangePhoto }) {
       {tab === 'calendar' ? (
         <MonthCalendar entries={entries} onOpen={onEdit} />
       ) : (
-        <ListView entries={entries} onEdit={onEdit} />
+        <ListView entries={entries} onEdit={onEdit} onToggleImportant={onToggleImportant} />
       )}
     </main>
   );
 }
 
-function ListView({ entries, onEdit }) {
+function ListView({ entries, onEdit, onToggleImportant }) {
   return (
     <>
       <p className="section-label">これまでの記録</p>
@@ -375,7 +384,18 @@ function ListView({ entries, onEdit }) {
         entries.map((entry) => (
           <article key={entry.id} className="entry">
             <div className="entry-head">
-              <p className="entry-date">{formatDate(entry.date)}</p>
+              <div className="entry-head-left">
+                <p className="entry-date">{formatDate(entry.date)}</p>
+                <button
+                  type="button"
+                  className={entry.important ? 'entry-star is-on' : 'entry-star'}
+                  aria-label="大切な日"
+                  aria-pressed={entry.important === true}
+                  onClick={() => onToggleImportant(entry.id)}
+                >
+                  {entry.important ? '★' : '☆'}
+                </button>
+              </div>
               <button type="button" className="entry-edit" onClick={() => onEdit(entry.id)}>
                 編集
               </button>
@@ -478,6 +498,8 @@ function MonthCalendar({ entries, onOpen }) {
               onClick={() => onOpen(entry.id)}
             >
               <span className="calendar-day">{day}</span>
+              {/* 大切な日の印。ここでは表示だけで、切り替えは一覧から行う。 */}
+              {entry.important && <span className="calendar-star">★</span>}
               {photo ? (
                 <img className="calendar-thumb" src={photo} alt="" />
               ) : (
