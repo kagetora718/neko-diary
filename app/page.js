@@ -230,14 +230,15 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
       <p className="lead">ペットとの大切な日常を、写真と言葉で残す。</p>
 
       {cats.length === 0 && (
-        <p className="empty">
+        <p className="empty empty-home">
           まだ登録がありません。
           <br />
           まずはペットを追加してみましょう。
         </p>
       )}
 
-      <div className="cat-grid">
+      {/* 1匹だけのときは、そのペットを主役にした大きなカードにする。 */}
+      <div className={cats.length === 1 ? 'cat-grid is-single' : 'cat-grid'}>
         {cats.map((cat) => {
           const count = entries.filter((entry) => entry.catId === cat.id).length;
           return (
