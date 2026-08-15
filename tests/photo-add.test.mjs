@@ -144,20 +144,21 @@ describe('新規記録：写真の追加', () => {
     assert.equal(await previewCount(page), 3, '重なった選択で写真が失われている');
   });
 
-  it('11. 写真欄に「1枚ずつ追加・最大5枚」であることが表示される', async () => {
+  it('11. 写真欄に「最大5枚」と現在の枚数が表示される', async () => {
     await open();
 
     const label = await page.locator('.field-label', { hasText: '写真' }).innerText();
-    assert.match(label, /1枚ずつ/, '「1枚ずつ」が見出しに書かれていること');
     assert.match(label, /最大5枚/, '「最大5枚」が見出しに書かれていること');
 
-    const hint = await page.locator('.hint', { hasText: '1枚ずつ' }).innerText();
-    assert.match(hint, /写真は1枚ずつ追加できます/);
+    // 端末によって挙動が違うので、追加のしかたは断定しない
+    assert.doesNotMatch(label, /1枚ずつ/);
 
-    // 残り枚数が分かること
-    assert.match(hint, /0\/5/);
+    const hint = () => page.locator('.hint', { hasText: '/5枚' }).innerText();
+    assert.match(await hint(), /0\/5枚/);
+    assert.doesNotMatch(await hint(), /1枚ずつ/);
+
     await pick(0);
-    assert.match(await page.locator('.hint', { hasText: '1枚ずつ' }).innerText(), /1\/5/);
+    assert.match(await hint(), /1\/5枚/);
   });
 
   it('12. 一連の操作でJavaScriptエラーが発生しない', () => {

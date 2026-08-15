@@ -590,7 +590,7 @@ function EntryScreen({ cat, entry, onCancel, onSave, onDelete }) {
       </div>
 
       <div className="field">
-        <div className="field-label">写真（1枚ずつ追加・最大{MAX_PHOTOS}枚）</div>
+        <div className="field-label">写真（最大{MAX_PHOTOS}枚）</div>
 
         {photos.length > 0 && (
           <div className="preview-grid">
@@ -625,7 +625,9 @@ function EntryScreen({ cat, entry, onCancel, onSave, onDelete }) {
         >
           写真を追加
         </button>
-        <p className="hint">写真は1枚ずつ追加できます（{photos.length}/{MAX_PHOTOS}枚）。</p>
+        <p className="hint">
+          {photos.length}/{MAX_PHOTOS}枚
+        </p>
       </div>
 
       <div className="field">
