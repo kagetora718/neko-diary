@@ -1,4 +1,4 @@
-// 「1匹の猫につき1日1件」の自動テスト。
+// 「1匹のペットにつき1日1件」の自動テスト。
 // catId + date が一意であること、重複が作られないことを確認する。
 //
 // 実行: npm test
@@ -66,7 +66,7 @@ describe('1匹1日1日記', () => {
     assert.equal(await entryCount(), 1);
   });
 
-  it('3. 同じ猫でもう一度押すと、新規ではなく既存日記の編集画面が開く', async () => {
+  it('3. 同じペットでもう一度押すと、新規ではなく既存日記の編集画面が開く', async () => {
     await openDiary();
     await pressRecord();
     await fillAndSave({ text: '今日の記録' });
@@ -108,7 +108,7 @@ describe('1匹1日1日記', () => {
     assert.equal(new Set(await entryDates()).size, 2, '同じ日付のカードが並んでいる');
   });
 
-  it('6. 別の猫なら同じ日付の日記を作れる', async () => {
+  it('6. 別のペットなら同じ日付の日記を作れる', async () => {
     await openDiary();
     await pressRecord();
     await fillAndSave({ text: 'ラヴィの今日' });
@@ -116,16 +116,16 @@ describe('1匹1日1日記', () => {
 
     await page.getByRole('button', { name: '← ホーム' }).click();
     await openCat(page, /アトム/);
-    assert.equal(await pressRecord(), '今日の思い出', '別の猫なのに編集画面が開いている');
+    assert.equal(await pressRecord(), '今日の思い出', '別のペットなのに編集画面が開いている');
 
     await fillAndSave({ text: 'アトムの今日' });
     await page.waitForSelector('.entry');
 
-    assert.equal(await entryCount(), 1, 'アトムの一覧に他の猫の記録が出ている');
+    assert.equal(await entryCount(), 1, 'アトムの一覧に他のペットの記録が出ている');
     assert.equal((await storedEntries()).length, 2);
   });
 
-  it('7. 新規保存で同じ猫・同じ日付の重複は作れない', async () => {
+  it('7. 新規保存で同じペット・同じ日付の重複は作れない', async () => {
     await openDiary();
     await pressRecord();
     await fillAndSave({ date: OTHER_DAY, text: '先にある記録' });

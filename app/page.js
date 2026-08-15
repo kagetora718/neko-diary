@@ -16,7 +16,7 @@ const CAT_PHOTO_SIZE = 400;
 const DUPLICATE_MESSAGE = 'この日付にはすでに記録があります。';
 const SAVE_PHOTO_MESSAGE = '写真を保存できませんでした。別の写真をお試しください。';
 
-// 1匹の猫につき1日1件。同じ猫・同じ日付の記録を探す。
+// 1匹のペットにつき1日1件。同じペット・同じ日付の記録を探す。
 // exceptId を渡すと、その記録自身は当たらない（日付を変えずに編集した場合）。
 function findEntryOfDay(entries, catId, date, exceptId) {
   return entries.find(
@@ -170,7 +170,7 @@ function newCat(name, photo) {
   };
 }
 
-/* ---------- 写真を1枚だけ選ぶ（猫の代表写真用） ---------- */
+/* ---------- 写真を1枚だけ選ぶ（ペットの代表写真用） ---------- */
 
 // 日記の写真追加と同じ作法。value は await より前に同期的に空にする。
 function SinglePhotoPicker({ label, onPick, onError }) {
@@ -226,8 +226,16 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
 
   return (
     <main className="screen">
-      <h1 className="title">ねこ日記</h1>
-      <p className="lead">猫との大切な日常を、写真と言葉で残す。</p>
+      <h1 className="title">ペット日記</h1>
+      <p className="lead">ペットとの大切な日常を、写真と言葉で残す。</p>
+
+      {cats.length === 0 && (
+        <p className="empty">
+          まだ登録がありません。
+          <br />
+          まずはペットを追加してみましょう。
+        </p>
+      )}
 
       <div className="cat-grid">
         {cats.map((cat) => {
@@ -253,7 +261,7 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
               className="input"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="猫の名前"
+              placeholder="ペットの名前"
               autoFocus
             />
 
@@ -283,7 +291,7 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
           </form>
         ) : (
           <button className="btn btn-outline" onClick={() => setAdding(true)}>
-            ＋ 猫を追加
+            ＋ ペットを追加
           </button>
         )}
       </div>
@@ -291,7 +299,7 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
   );
 }
 
-/* ---------- 画面2：猫ごとの日記一覧 ---------- */
+/* ---------- 画面2：ペットごとの日記一覧 ---------- */
 
 function CatScreen({ cat, entries, onBack, onNew, onEdit, onToggleImportant, onChangePhoto }) {
   const [tab, setTab] = useState('list');

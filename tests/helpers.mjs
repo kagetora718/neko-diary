@@ -124,10 +124,28 @@ export async function startApp(port) {
 
 /* ---------- 画面操作 ---------- */
 
-// 保存データを消してホームから開き直す。
-export async function reset(page, base) {
+// テストの出発点にするペット。
+// アプリ自体は何も登録されていない状態から始まるので、
+// 既存の登録がある前提のテスト用にここで用意する。
+export const SEED_CATS = [
+  { id: 'cat-ravi', name: 'ラヴィ', photo: 'data:image/svg+xml;utf8,<svg/>' },
+  { id: 'cat-atom', name: 'アトム', photo: 'data:image/svg+xml;utf8,<svg/>' },
+  { id: 'cat-leyenda', name: 'レイエンダ', photo: 'data:image/svg+xml;utf8,<svg/>' },
+];
+
+// 保存データを入れ直してホームから開き直す。
+// cats に [] を渡すと、初回アクセスと同じ何もない状態になる。
+export async function reset(page, base, cats = SEED_CATS) {
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.evaluate(() => window.localStorage.clear());
+  await page.evaluate((seed) => {
+    window.localStorage.clear();
+    if (seed.length > 0) {
+      window.localStorage.setItem(
+        'neko-diary-v1',
+        JSON.stringify({ cats: seed, entries: [] }),
+      );
+    }
+  }, cats);
   await page.reload({ waitUntil: 'domcontentloaded' });
 }
 

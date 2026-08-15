@@ -149,7 +149,7 @@ describe('月間カレンダー', () => {
     assert.equal(await page.locator('.calendar-dot').count(), 1, '記録ありの印が出ていない');
   });
 
-  it('9. 選択中の猫の記録だけが出る（別の猫の同じ日は出ない）', async () => {
+  it('9. 選択中のペットの記録だけが出る（別のペットの同じ日は出ない）', async () => {
     const day = dateString(THIS_YEAR, THIS_MONTH, 7);
     await seed([
       { id: 'e1', catId: 'cat-ravi', date: day, photos: [TINY_PHOTO], text: 'ラヴィ' },
@@ -157,7 +157,7 @@ describe('月間カレンダー', () => {
     ]);
 
     await openCalendar();
-    assert.equal(await marked(), 1, 'ラヴィの月に他の猫の記録が出ている');
+    assert.equal(await marked(), 1, 'ラヴィの月に他のペットの記録が出ている');
     assert.equal(await page.locator('.calendar-thumb').count(), 1);
 
     await page.getByRole('button', { name: '← ホーム' }).click();

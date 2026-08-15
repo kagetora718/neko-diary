@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'ねこ日記',
-  description: '猫との大切な日常を、写真と言葉で残す',
+  title: 'ペット日記',
+  description: 'ペットとの大切な日常を、写真と言葉で残す',
 };
 
 export const viewport = {

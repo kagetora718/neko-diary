@@ -222,7 +222,7 @@ describe('カレンダーの年月選択', () => {
     assert.equal(await page.locator('input[type=date]').inputValue(), day);
   });
 
-  it('14. 移動先でも別の猫の記録は混ざらない', async () => {
+  it('14. 移動先でも別のペットの記録は混ざらない', async () => {
     await seed([
       { id: 'e1', catId: 'cat-atom', date: dateString(PAST_YEAR, PAST_MONTH, 8), photos: [TINY_PHOTO], text: 'アトム' },
       { id: 'e2', catId: 'cat-ravi', date: dateString(PAST_YEAR, PAST_MONTH, 10), photos: [], text: 'ラヴィ' },
@@ -230,7 +230,7 @@ describe('カレンダーの年月選択', () => {
     await openCalendar();
     await jumpTo(PAST_YEAR, PAST_MONTH);
 
-    assert.equal(await page.locator('.calendar-cell.has-entry').count(), 1, '他の猫の記録が出ている');
+    assert.equal(await page.locator('.calendar-cell.has-entry').count(), 1, '他のペットの記録が出ている');
     assert.equal(await page.locator('.calendar-thumb').count(), 0);
     assert.equal(await page.locator('.calendar-dot').count(), 1);
   });

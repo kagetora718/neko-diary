@@ -1,4 +1,4 @@
-// 猫の代表写真の自動テスト。
+// ペットの代表写真の自動テスト。
 //
 // 実行: npm test
 
@@ -33,7 +33,7 @@ async function choosePhoto(index) {
   await page.waitForTimeout(400);
 }
 
-// ホームの猫カードの写真の src を名前で引く。
+// ホームのペットカードの写真の src を名前で引く。
 // localStorage は描画後に読み込まれるので、カードが出るまで待つ。
 async function cardPhoto(name) {
   await page.waitForSelector('.cat-card');
@@ -61,10 +61,10 @@ const failSaves = () =>
 const storedCats = () =>
   page.evaluate(() => JSON.parse(window.localStorage.getItem('neko-diary-v1') || '{}').cats || []);
 
-describe('猫の代表写真', () => {
-  it('1. 名前だけで新しい猫を追加できる', async () => {
+describe('ペットの代表写真', () => {
+  it('1. 名前だけで新しいペットを追加できる', async () => {
     await reset(page, app.base);
-    await page.getByRole('button', { name: '＋ 猫を追加' }).click();
+    await page.getByRole('button', { name: '＋ ペットを追加' }).click();
     await page.locator('.input').fill('みかん');
     await page.getByRole('button', { name: '追加する' }).click();
 
@@ -72,9 +72,9 @@ describe('猫の代表写真', () => {
     assert.match(await cardPhoto('みかん'), /^data:image\/svg\+xml/, 'プレースホルダーでないこと');
   });
 
-  it('2. 新しい猫に代表写真を設定でき、ホームカードに出る', async () => {
+  it('2. 新しいペットに代表写真を設定でき、ホームカードに出る', async () => {
     await reset(page, app.base);
-    await page.getByRole('button', { name: '＋ 猫を追加' }).click();
+    await page.getByRole('button', { name: '＋ ペットを追加' }).click();
     await page.locator('.input').fill('そら');
     await choosePhoto(0);
 
@@ -87,16 +87,16 @@ describe('猫の代表写真', () => {
     assert.match(src, /^data:image\/jpeg/, '選んだ写真がカードに出ていない');
   });
 
-  it('3. 写真を選ばなかった猫はプレースホルダーのまま', async () => {
+  it('3. 写真を選ばなかったペットはプレースホルダーのまま', async () => {
     await reset(page, app.base);
-    await page.getByRole('button', { name: '＋ 猫を追加' }).click();
+    await page.getByRole('button', { name: '＋ ペットを追加' }).click();
     await page.locator('.input').fill('しろ');
     await page.getByRole('button', { name: '追加する' }).click();
 
     assert.match(await cardPhoto('しろ'), /^data:image\/svg\+xml/);
   });
 
-  it('4. 既存の猫の代表写真を後から変更できる', async () => {
+  it('4. 既存のペットの代表写真を後から変更できる', async () => {
     await reset(page, app.base);
     const before = await cardPhoto('ラヴィ');
 
@@ -104,7 +104,7 @@ describe('猫の代表写真', () => {
     await page.getByRole('button', { name: '写真を変更' }).click();
     await choosePhoto(1);
 
-    // 猫の日記画面のヘッダーが差し替わる
+    // ペットの日記画面のヘッダーが差し替わる
     const header = await page.locator('.cat-header img').getAttribute('src');
     assert.match(header, /^data:image\/jpeg/);
     assert.notEqual(header, before);
@@ -124,7 +124,7 @@ describe('猫の代表写真', () => {
     assert.equal(await cardPhoto('ラヴィ'), header);
 
     const cats = await storedCats();
-    assert.equal(cats.length, 3, '猫の件数が変わっている');
+    assert.equal(cats.length, 3, 'ペットの件数が変わっている');
     assert.match(cats.find((c) => c.name === 'ラヴィ').photo, /^data:image\/jpeg/);
   });
 
@@ -208,13 +208,13 @@ describe('猫の代表写真', () => {
     );
   });
 
-  it('10. 保存できないときは新しい猫を追加したことにしない', async () => {
+  it('10. 保存できないときは新しいペットを追加したことにしない', async () => {
     await reset(page, app.base);
     await page.waitForSelector('.cat-card');
     const count = await page.locator('.cat-card').count();
     await failSaves();
 
-    await page.getByRole('button', { name: '＋ 猫を追加' }).click();
+    await page.getByRole('button', { name: '＋ ペットを追加' }).click();
     await page.locator('.input').fill('そら');
     await choosePhoto(0);
     await page.getByRole('button', { name: '追加する' }).click();

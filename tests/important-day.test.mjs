@@ -186,14 +186,14 @@ describe('大切な日', () => {
     assert.equal(await page.locator('.entry-star').count(), 0);
   });
 
-  it('14. 別の猫の大切な日はこちらのカレンダーに出ない', async () => {
+  it('14. 別のペットの大切な日はこちらのカレンダーに出ない', async () => {
     await seed([
       { id: 'e1', catId: 'cat-atom', date: dateString(17), photos: [], text: 'アトム', important: true },
       { id: 'e2', catId: 'cat-ravi', date: dateString(18), photos: [], text: 'ラヴィ' },
     ]);
     await openCalendar();
 
-    assert.equal(await page.locator('.calendar-star').count(), 0, '他の猫の★が出ている');
+    assert.equal(await page.locator('.calendar-star').count(), 0, '他のペットの★が出ている');
     assert.equal(await page.locator('.calendar-cell.has-entry').count(), 1);
   });
 

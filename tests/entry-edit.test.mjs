@@ -142,7 +142,7 @@ describe('保存済み日記：編集と削除', () => {
     await page.getByRole('button', { name: 'この記録を削除' }).click();
     await page.getByRole('button', { name: '削除する' }).click();
 
-    // その猫の日記一覧に戻り、記録が消えている
+    // そのペットの日記一覧に戻り、記録が消えている
     await page.waitForSelector('.empty');
     assert.equal(await page.locator('.entry').count(), 0);
     assert.match(await page.locator('.empty').innerText(), /まだ記録がありません/);
