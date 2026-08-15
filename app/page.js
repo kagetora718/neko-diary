@@ -442,6 +442,27 @@ function CatScreen({
 }
 
 function ListView({ entries, onEdit, onToggleImportant }) {
+  // 開いている写真。1枚だけ表示し、写真間の移動はしない。
+  const [viewing, setViewing] = useState(null);
+
+  // 表示中は後ろの一覧が動かないようにする。閉じると元の位置に戻る。
+  useEffect(() => {
+    if (!viewing) return;
+
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKey = (event) => {
+      if (event.key === 'Escape') setViewing(null);
+    };
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [viewing]);
+
   return (
     <>
       <p className="section-label">これまでの記録</p>
@@ -476,7 +497,15 @@ function ListView({ entries, onEdit, onToggleImportant }) {
             {entryPhotos(entry).length > 0 && (
               <div className={`entry-photos ${entryPhotos(entry).length === 1 ? 'single' : ''}`}>
                 {entryPhotos(entry).map((photo, index) => (
-                  <img key={index} src={photo} alt="" />
+                  <button
+                    key={index}
+                    type="button"
+                    className="entry-photo"
+                    aria-label="写真を大きく見る"
+                    onClick={() => setViewing(photo)}
+                  >
+                    <img src={photo} alt="" />
+                  </button>
                 ))}
               </div>
             )}
@@ -484,6 +513,26 @@ function ListView({ entries, onEdit, onToggleImportant }) {
             {entry.text && <p className="entry-text">{entry.text}</p>}
           </article>
         ))
+      )}
+
+      {viewing && (
+        // 背景を押しても閉じられる。写真そのものを押したときは閉じない。
+        <div className="viewer" onClick={() => setViewing(null)}>
+          <button
+            type="button"
+            className="viewer-close"
+            aria-label="閉じる"
+            onClick={() => setViewing(null)}
+          >
+            ×
+          </button>
+          <img
+            className="viewer-photo"
+            src={viewing}
+            alt=""
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
       )}
     </>
   );
