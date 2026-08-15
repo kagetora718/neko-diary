@@ -31,7 +31,7 @@ body {
   z-index: -1;
   pointer-events: none;
   background-color: var(--bg);
-  background-image: linear-gradient(rgba(253, 250, 246, 0.62), rgba(253, 250, 246, 0.62)),
+  background-image: linear-gradient(rgba(253, 250, 246, 0.45), rgba(253, 250, 246, 0.45)),
     var(--pet-bg);
   background-size: cover;
   background-position: center;
