@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import petBackground from './pet-background.jpg';
 import {
   formatDate,
   loadData,
@@ -240,6 +241,13 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
 
   return (
     <main className="screen">
+      {/* ホームだけの壁紙。画面いっぱいに敷き、内容はこの上に出る。 */}
+      <div
+        className="home-bg"
+        aria-hidden="true"
+        style={{ '--pet-bg': `url(${petBackground.src})` }}
+      />
+
       <h1 className="title">ペット日記</h1>
       <p className="lead">ペットとの大切な日常を、写真と言葉で残す。</p>
 

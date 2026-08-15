@@ -22,6 +22,22 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* --- ホームの壁紙 --- */
+/* 画面いっぱいに敷く。z-index:-1 で内容より後ろに置き、操作は妨げない。
+   同じ色の薄い膜を重ねて、文字とカードが読みやすいようにする。 */
+.home-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(253, 250, 246, 0.62), rgba(253, 250, 246, 0.62)),
+    var(--pet-bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 /* スマホ幅を基準にして、広い画面では中央に寄せる */
 .screen {
   max-width: 560px;
