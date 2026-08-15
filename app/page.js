@@ -15,6 +15,7 @@ const MAX_PHOTOS = 5;
 const CAT_PHOTO_SIZE = 400;
 const DUPLICATE_MESSAGE = 'この日付にはすでに記録があります。';
 const SAVE_PHOTO_MESSAGE = '写真を保存できませんでした。別の写真をお試しください。';
+const DELETE_CAT_MESSAGE = '削除できませんでした。もう一度お試しください。';
 
 // 1匹のペットにつき1日1件。同じペット・同じ日付の記録を探す。
 // exceptId を渡すと、その記録自身は当たらない（日付を変えずに編集した場合）。
@@ -90,6 +91,19 @@ export default function App() {
             cats: data.cats.map((cat) => (cat.id === currentCat.id ? { ...cat, photo } : cat)),
           })
         }
+        onDeleteCat={() => {
+          // そのペットと、そのペットの記録だけをまとめて消す。
+          const saved = update({
+            ...data,
+            cats: data.cats.filter((cat) => cat.id !== currentCat.id),
+            entries: data.entries.filter((entry) => entry.catId !== currentCat.id),
+          });
+          if (!saved) return false;
+
+          setCurrentCatId(null);
+          setView('home');
+          return true;
+        }}
       />
     );
   }
@@ -302,10 +316,21 @@ function HomeScreen({ cats, entries, onSelect, onAddCat }) {
 
 /* ---------- 画面2：ペットごとの日記一覧 ---------- */
 
-function CatScreen({ cat, entries, onBack, onNew, onEdit, onToggleImportant, onChangePhoto }) {
+function CatScreen({
+  cat,
+  entries,
+  onBack,
+  onNew,
+  onEdit,
+  onToggleImportant,
+  onChangePhoto,
+  onDeleteCat,
+}) {
   const [tab, setTab] = useState('list');
   const [changingPhoto, setChangingPhoto] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [message, setMessage] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   return (
     <main className="screen">
@@ -373,6 +398,44 @@ function CatScreen({ cat, entries, onBack, onNew, onEdit, onToggleImportant, onC
         <MonthCalendar entries={entries} onOpen={onEdit} />
       ) : (
         <ListView entries={entries} onEdit={onEdit} onToggleImportant={onToggleImportant} />
+      )}
+
+      {/* 危険な操作なので、いつもの操作から離して画面の最後に置く。 */}
+      {confirmingDelete ? (
+        <div className="confirm">
+          <p className="confirm-text">{cat.name}を削除しますか？</p>
+          <p className="confirm-note">このペットの日記もすべて削除されます。</p>
+          <div className="stack">
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => {
+                // 保存できなかったときは削除できたことにしない。
+                if (!onDeleteCat()) setDeleteError(DELETE_CAT_MESSAGE);
+              }}
+            >
+              削除する
+            </button>
+            <button type="button" className="back" onClick={() => setConfirmingDelete(false)}>
+              キャンセル
+            </button>
+          </div>
+
+          {deleteError && <p className="notice">{deleteError}</p>}
+        </div>
+      ) : (
+        <div className="stack">
+          <button
+            type="button"
+            className="delete-link"
+            onClick={() => {
+              setConfirmingDelete(true);
+              setDeleteError('');
+            }}
+          >
+            ペットを削除
+          </button>
+        </div>
       )}
     </main>
   );

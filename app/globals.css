@@ -504,6 +504,13 @@ body {
   font-weight: 600;
 }
 
+/* 何が一緒に消えるのかを補足する */
+.confirm-note {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .back {
   background: none;
   border: none;
