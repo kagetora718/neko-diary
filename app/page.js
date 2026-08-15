@@ -421,6 +421,23 @@ function ListView({ entries, onEdit, onToggleImportant }) {
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
+// 年月選択で遡れる年数。過去を見返せれば十分なので、未来年は出さない。
+const YEAR_SPAN = 20;
+
+function yearOptions(shownYear) {
+  const thisYear = new Date().getFullYear();
+  const years = [];
+  for (let year = thisYear; year >= thisYear - YEAR_SPAN; year--) years.push(year);
+
+  // ‹ › でこの範囲の外へ移動している場合でも、今見ている年を選べるようにする。
+  if (!years.includes(shownYear)) {
+    years.push(shownYear);
+    years.sort((a, b) => b - a);
+  }
+
+  return years;
+}
+
 // 'YYYY-MM-DD'。todayString() と同じ形にそろえる。
 function dateString(year, month, day) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -443,6 +460,8 @@ function MonthCalendar({ entries, onOpen }) {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
+  const [picking, setPicking] = useState(false);
+  const [draft, setDraft] = useState(shown);
 
   function move(step) {
     setShown((current) => {
@@ -459,13 +478,65 @@ function MonthCalendar({ entries, onOpen }) {
         <button type="button" className="calendar-move" aria-label="前の月" onClick={() => move(-1)}>
           ‹
         </button>
-        <p className="calendar-title">
+        <button
+          type="button"
+          className="calendar-title"
+          aria-label="年月を選ぶ"
+          onClick={() => {
+            setDraft(shown);
+            setPicking(true);
+          }}
+        >
           {shown.year}年{shown.month + 1}月
-        </p>
+        </button>
         <button type="button" className="calendar-move" aria-label="次の月" onClick={() => move(1)}>
           ›
         </button>
       </div>
+
+      {picking && (
+        <div className="calendar-picker">
+          <select
+            className="calendar-select"
+            aria-label="年"
+            value={draft.year}
+            onChange={(event) => setDraft({ ...draft, year: Number(event.target.value) })}
+          >
+            {yearOptions(shown.year).map((year) => (
+              <option key={year} value={year}>
+                {year}年
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="calendar-select"
+            aria-label="月"
+            value={draft.month}
+            onChange={(event) => setDraft({ ...draft, month: Number(event.target.value) })}
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {i + 1}月
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            className="calendar-go"
+            onClick={() => {
+              setShown(draft);
+              setPicking(false);
+            }}
+          >
+            移動
+          </button>
+          <button type="button" className="calendar-cancel" onClick={() => setPicking(false)}>
+            キャンセル
+          </button>
+        </div>
+      )}
 
       <div className="calendar-grid">
         {WEEKDAYS.map((label) => (

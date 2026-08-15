@@ -161,9 +161,61 @@ body {
   margin-bottom: 10px;
 }
 
+/* 年月表示は押すと年月選択が開く */
 .calendar-title {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: inherit;
   font-size: 16px;
   font-weight: 600;
+  font-family: inherit;
+  padding: 10px 4px;
+  cursor: pointer;
+}
+
+/* --- 年月選択 --- */
+.calendar-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.calendar-select {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 16px; /* 16px未満だとSafariが自動ズームする */
+  font-family: inherit;
+  background: var(--card);
+  color: inherit;
+}
+
+.calendar-go,
+.calendar-cancel {
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.calendar-go {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.calendar-cancel {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
 }
 
 .calendar-move {
